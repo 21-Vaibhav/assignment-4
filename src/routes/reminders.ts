@@ -1,17 +1,27 @@
 import { Hono } from 'hono';
 import { Reminder } from '../types';
+import { nanoid } from 'nanoid'; // Import nanoid for unique IDs
 
 const reminders: Reminder[] = [];
 const reminderRouter = new Hono();
 
 reminderRouter.post('/', async (c) => {
-  const body = await c.req.json<Reminder>();
-  if (!body.id || !body.title || !body.dueDate) {
-    return c.json({ error: 'Missing required fields' }, 400);
-  }
-  reminders.push(body);
-  return c.json(body, 201);
-});
+    const body = await c.req.json<Omit<Reminder, 'id'>>(); // Exclude 'id' from input
+    if (!body.title || !body.dueDate) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+  
+    const newReminder: Reminder = {
+      id: nanoid(), // Generate a unique ID
+      title: body.title,
+      description: body.description || '', // Default empty string if no description
+      dueDate: body.dueDate,
+      isCompleted: body.isCompleted ?? false, // Default to false if not provided
+    };
+  
+    reminders.push(newReminder);
+    return c.json(newReminder, 201);
+  });
 
 reminderRouter.get('/:id', async (c) =>
 {
@@ -82,14 +92,18 @@ reminderRouter.get('/completed',async (c) =>
     return c.json(completedReminders, 200);
 })
 
-reminderRouter.get('/not-completed', async (c) =>
-{
-    const notCompletedReminders = reminders.filter((r) => !r.isCompleted);
-    if (notCompletedReminders.length === 0) {
-      return c.json({ error: 'No not completed reminders found' }, 404);
+reminderRouter.get('/not-completed', async (c) => {
+    if (!reminders || reminders.length === 0) {
+        return c.json({ error: 'No reminders found' }, 404);
     }
-    return c.json(notCompletedReminders, 200);
 
+    const notCompletedReminders = reminders.filter((r) => r.isCompleted === false);
+
+    if (notCompletedReminders.length === 0) {
+        return c.json({ error: 'No not-completed reminders found' }, 404);
+    }
+
+    return c.json(notCompletedReminders, 200);
 })
 
 reminderRouter.get('/due-today', async(c) =>
