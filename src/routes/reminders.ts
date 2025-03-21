@@ -1,22 +1,22 @@
 import { Hono } from 'hono';
 import { Reminder } from '../types';
-import { nanoid } from 'nanoid'; // Import nanoid for unique IDs
+import { nanoid } from 'nanoid'; 
 
 const reminders: Reminder[] = [];
 const reminderRouter = new Hono();
 
 reminderRouter.post('/', async (c) => {
-    const body = await c.req.json<Omit<Reminder, 'id'>>(); // Exclude 'id' from input
+    const body = await c.req.json<Omit<Reminder, 'id'>>(); 
     if (!body.title || !body.dueDate) {
       return c.json({ error: 'Missing required fields' }, 400);
     }
   
     const newReminder: Reminder = {
-      id: nanoid(), // Generate a unique ID
+      id: nanoid(), 
       title: body.title,
-      description: body.description || '', // Default empty string if no description
+      description: body.description || '', 
       dueDate: body.dueDate,
-      isCompleted: body.isCompleted ?? false, // Default to false if not provided
+      isCompleted: body.isCompleted ?? false, 
     };
   
     reminders.push(newReminder);
